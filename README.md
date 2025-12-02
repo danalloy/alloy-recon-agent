@@ -1,4 +1,6 @@
-# Alloy Recon Agent
+# ALLOY RECON AGENT
+
+Welcome to my project!
 
 Alloy Recon Agent is a proof-of-concept financial reconciliation agent that pulls accounting data from QuickBooks to streamline month-end close. The agent focuses on automating the repetitive steps of gathering reports, comparing account activity, and highlighting exceptions so finance teams can resolve issues faster.
 
