@@ -5,4 +5,4 @@
 - Use `pnpm` for dependencies.
 
 ## Review guidelines
-- Make sure the title of the readme is in all caps every time there's a new pull request
+- Comment with a warning if the README title is not completely uppercase
