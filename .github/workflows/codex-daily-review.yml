@@ -1,42 +1,48 @@
-name: Codex Daily Review
+name: Codex README Title Check
 
 on:
   schedule:
-    - cron: "0 3 * * *"   # Run daily at 03:00 UTC
-  workflow_dispatch:       # Allow manual trigger
+    - cron: "0 3 * * *"     # Runs every day at 03:00 UTC
+  workflow_dispatch: {}      # Allows manual trigger from GitHub UI
 
 jobs:
-  review:
+  codex-readme-title:
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Read README.md into variable
+        id: readme
+        run: |
+          if [ ! -f README.md ]; then
+            echo "README.md not found"
+            echo "content=" >> $GITHUB_OUTPUT
+          else
+            # Save README content into a workflow output variable
+            CONTENT=$(sed 's/"/\\"/g' README.md)
+            echo "content=\"$CONTENT\"" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Codex Exec on README
+        uses: openai/codex-action@v1
         with:
-          node-version: '20'   # recommended for OpenAI tooling
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt: |
+            You are Codex running inside GitHub Actions.
 
-      - name: Install Codex CLI (npm)
-        run: |
-          echo "Installing Codex CLI from npm..."
-          npm install -g @openai/codex
-          echo "Codex CLI installed at: $(which codex || true)"
+            Here is the README.md content from this repository:
 
-      - name: Verify Codex CLI installation
-        run: |
-          codex --version || (echo "Codex CLI not found — installation failed" && exit 1)
+            ---
+            ${{ steps.readme.outputs.content }}
+            ---
 
-      - name: Run Codex daily review pipeline
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          chmod +x .github/scripts/codex_daily_pipeline.sh
-          .github/scripts/codex_daily_pipeline.sh
+            Tasks:
+            1. Find the main H1 title (the line starting with "# ").
+            2. Extract the exact text of that title.
+            3. Determine if ALL letters in the title are capitalized (ignore spaces/punctuation).
+            4. Output ONLY:
 
-      - name: Upload review report artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: codex-daily-review
-          path: reports/codex-review-*.md
+            Title: <title>
+            All Caps: <YES or NO>
