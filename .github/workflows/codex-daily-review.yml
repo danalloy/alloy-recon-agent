@@ -1,0 +1,42 @@
+name: Codex Daily Review
+
+on:
+  schedule:
+    - cron: "0 3 * * *"   # Run daily at 03:00 UTC
+  workflow_dispatch:       # Allow manual trigger
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'   # recommended for OpenAI tooling
+
+      - name: Install Codex CLI (npm)
+        run: |
+          echo "Installing Codex CLI from npm..."
+          npm install -g @openai/codex
+          echo "Codex CLI installed at: $(which codex || true)"
+
+      - name: Verify Codex CLI installation
+        run: |
+          codex --version || (echo "Codex CLI not found — installation failed" && exit 1)
+
+      - name: Run Codex daily review pipeline
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          chmod +x .github/scripts/codex_daily_pipeline.sh
+          .github/scripts/codex_daily_pipeline.sh
+
+      - name: Upload review report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-daily-review
+          path: reports/codex-review-*.md
