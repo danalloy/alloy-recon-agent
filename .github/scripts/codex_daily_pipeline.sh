@@ -1,43 +1,43 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Simple POC script: read README.md and print its title
+echo "[codex-poc] Starting Codex README title check"
 
-REPO_DIR="$GITHUB_WORKSPACE"
-REPORTS_DIR="${REPO_DIR}/reports"
+REPO_DIR="${GITHUB_WORKSPACE:-$(pwd)}"
+README_PATH="${REPO_DIR}/README.md"
 
-DATE_STR="$(date +%F)"
-REPORT_FILE="${REPORTS_DIR}/poc-review-${DATE_STR}.md"
-
-mkdir -p "$REPORTS_DIR"
-
-echo "[poc] Running simple README title extraction"
-
-# Ensure README exists
-if [ ! -f "${REPO_DIR}/README.md" ]; then
-  echo "[poc] ERROR: README.md not found!"
+# Ensure Codex CLI is installed
+if ! command -v codex >/dev/null 2>&1; then
+  echo "[codex-poc] ERROR: The 'codex' CLI is not installed or not in PATH."
+  echo "[codex-poc] Make sure your GitHub Action installs it via npm."
   exit 1
 fi
 
-# Extract first Markdown H1 title: "# Something"
-README_TITLE="$(grep '^# ' "${REPO_DIR}/README.md" | head -n 1 | sed 's/^# //')"
-
-if [ -z "$README_TITLE" ]; then
-  README_TITLE="(No H1 title found in README.md)"
+# Ensure README exists
+if [ ! -f "$README_PATH" ]; then
+  echo "[codex-poc] ERROR: README.md not found at ${README_PATH}"
+  exit 1
 fi
 
-echo "[poc] README title: $README_TITLE"
+README_CONTENT="$(cat "$README_PATH")"
 
-# Write the report
-{
-  echo "# Proof of Concept Report"
-  echo
-  echo "Generated on: ${DATE_STR}"
-  echo
-  echo "## README Title"
-  echo
-  echo "${README_TITLE}"
-  echo
-} > "${REPORT_FILE}"
+echo "[codex-poc] Calling Codex to extract title and capitalization info..."
 
-echo "[poc] POC report written to: ${REPORT_FILE}"
+CODEX_RESPONSE="$(
+  printf '%s\n\n%s\n\n%s\n\n%s\n' \
+    "You are an assistant analyzing a README file." \
+    "README CONTENT:" \
+    "${README_CONTENT}" \
+    "Tasks:
+1. Extract the main README title (the H1 heading beginning with '# ').
+2. Tell me whether *all letters in that title* are capitalized (YES or NO).
+3. Output only:
+   Title: <title>
+   All Caps: <YES or NO>" \
+  | codex ask
+)"
+
+echo "[codex-poc] Codex Result:"
+echo "--------------------------------"
+echo "${CODEX_RESPONSE}"
+echo "--------------------------------"
