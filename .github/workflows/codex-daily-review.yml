@@ -8,41 +8,35 @@ on:
 jobs:
   codex-readme-title:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Read README.md into variable
-        id: readme
-        run: |
-          if [ ! -f README.md ]; then
-            echo "README.md not found"
-            echo "content=" >> $GITHUB_OUTPUT
-          else
-            # Save README content into a workflow output variable
-            CONTENT=$(sed 's/"/\\"/g' README.md)
-            echo "content=\"$CONTENT\"" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run Codex Exec on README
+      - name: Run Codex on README.md
+        id: run_codex
         uses: openai/codex-action@v1
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           prompt: |
-            You are Codex running inside GitHub Actions.
+            You are Codex running inside a GitHub Actions job for the repository ${{ github.repository }}.
 
-            Here is the README.md content from this repository:
+            In the current working directory, there is a README.md file at the repository root.
+            Perform these steps:
 
-            ---
-            ${{ steps.readme.outputs.content }}
-            ---
+            1. Open the file README.md from the repo root.
+            2. Find the main H1 title (the line starting with "# ").
+            3. Extract its exact text.
+            4. Determine whether ALL letters in that title are uppercase A–Z
+               (ignore spaces, punctuation, and digits).
+            5. Respond EXACTLY in this format, with no extra text:
 
-            Tasks:
-            1. Find the main H1 title (the line starting with "# ").
-            2. Extract the exact text of that title.
-            3. Determine if ALL letters in the title are capitalized (ignore spaces/punctuation).
-            4. Output ONLY:
-
-            Title: <title>
+            Title: <title text>
             All Caps: <YES or NO>
+
+      - name: Print Codex result
+        run: |
+          echo "Codex result:"
+          echo "${{ steps.run_codex.outputs.final-message }}"
