@@ -29,7 +29,8 @@ Manual reconciliation often means downloading spreadsheets from QuickBooks, comb
    ```
 2. **Review prerequisites**
    - Access to a QuickBooks sandbox or production company with API credentials.
-   - Node.js 18+ or Python 3.10+ (depending on the integration layer you extend).
+   - Node.js 18+ and [pnpm](https://pnpm.io/) for the Electron shell.
+   - Python 3.10+ (depending on the integration layer you extend).
 3. **Configure credentials**
    - Create an `.env` with QuickBooks OAuth credentials (client ID/secret, redirect URI, refresh token) and any storage configuration.
    - Keep credentials out of version control.
@@ -39,6 +40,27 @@ Manual reconciliation often means downloading spreadsheets from QuickBooks, comb
      - Pull target reports for a period.
      - Normalize and reconcile the data.
      - Return a summary of exceptions.
+
+## Running the Electron app
+
+These steps assume the Electron shell lives in the repo root. If you move it into a subfolder (e.g., `apps/desktop`), run the pnpm commands from there instead.
+
+1. **Install dependencies**
+   ```bash
+   pnpm install
+   ```
+2. **Start the development app**
+   ```bash
+   pnpm run dev
+   ```
+   This typically starts the renderer dev server and launches Electron with hot reload so you can iterate quickly.
+3. **Package a production build (optional)**
+   ```bash
+   pnpm run build   # bundle renderer assets
+   pnpm run package # create a platform-specific installer under dist/
+   ```
+4. **Run a packaged build locally**
+   After packaging, launch the generated binary from the `dist/` directory to verify the production build.
 
 ## Contributing
 
